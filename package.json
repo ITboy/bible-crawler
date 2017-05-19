@@ -4,7 +4,7 @@
   "description": "an crawler program for multiple versions of bible",
   "main": "index.js",
   "scripts": {
-    "start": "node dal.js",
+    "start": "node index.js",
     "lint": "node_modules/eslint/bin/eslint.js .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
