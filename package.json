@@ -31,6 +31,10 @@
     "eslint-plugin-react": "^7.0.1"
   },
   "dependencies": {
-    "mongodb": "^2.2.26"
+    "cheerio": "^0.22.0",
+    "mongodb": "^2.2.27",
+    "require": "^2.4.20",
+    "superagent": "^3.5.2",
+    "superagent-charset": "^1.2.0"
   }
 }
