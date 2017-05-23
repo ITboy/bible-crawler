@@ -26,14 +26,14 @@ class BibleDal {
     return { name, version, language, origin };
   }
 
-  async updateStatment(bible, isNew, name) {
+  async updateTestatment(bible, isNew, name) {
     await this.connect();
 
     if (!bible) {
       throw new Error('Bible should be exist first!');
     }
-    const updateTestatment = isNew ? { newTestament: { name } } : { oldTestament: { name } };
-    await this.db.collection('bible').update(bible, { $set: updateTestatment });
+    const testatmentName = isNew ? { newTestament: { name } } : { oldTestament: { name } };
+    await this.db.collection('bible').update(bible, { $set: testatmentName });
   }
 
   async addScriptures(bible, isNew, bookName, chapterNo, sectionNo, text) {

@@ -1,45 +1,58 @@
 const BibleDal = require('./BibleDal');
 const cheerio = require('cheerio');
-const request = require('superagent');
-require('superagent-charset')(request);
+const CachedSuperAgent = require('./CachedSuperAgent');
 
 const BibleDao = new BibleDal('mongodb://localhost:27017/mydb');
 
 const mainUrl = 'http://www.o-bible.com/';
 const indexUrl = 'http://www.o-bible.com/gb/hgb.html';
 
+const NEW_TESTAMENT_NAME = '新约全书';
+const OLD_TESTAMENT_NAME = '旧约全书';
+
+const request = new CachedSuperAgent('gbk');
+
+const innerTrim = function innerTrim(originText) {
+  const split = String.prototype.split;
+  return split.call(originText, /\s*/).join('');
+};
+
+const getTestamentName = function getTestamentName(originName) {
+  const testamentNameLen = OLD_TESTAMENT_NAME.length;
+  return Array.from(innerTrim(originName)).slice(0, testamentNameLen).join('');
+};
+
 (async function main() {
-
-  const res = await request.get(indexUrl).charset('gbk').timeout({
-    response: 5000,  // Wait 5 seconds for the server to start sending,
-    deadline: 60000, // but allow 1 minute for the file to finish loading.
-  });
-
+  const res = await request.get(indexUrl);
+  console.log(res.text());
   const $ = cheerio.load(res.text);
-  $('.tm_cn').map((element) => {
+
+  const testaments = $('div.tm.cn').map((i, element) => {
     const $this = $(element);
-    console.log($this('tt').text());
-  });
-  /*
+    const testamentName = getTestamentName($this.find('div.tt').text());
+    const isNew = testamentName === NEW_TESTAMENT_NAME;
+    const books = $this.find('a').map((j, anchorElem) => ({
+      name: $(anchorElem).text(),
+      url: $(anchorElem).attr('href'),
+    })).get();
+    return { testamentName, isNew, books };
+  }).get();
+
   const bible = await BibleDao.createBible(
     '圣经和合本',
     '和合本',
     '简体中文',
     {
-      main: 'http://www.o-bible.com/',
-      resourceUrl: 'http://www.o-bible.com/gb/hgb.html',
+      main: mainUrl,
+      index: indexUrl,
     });
 
-  await BibleDao.updateStatment(bible, true, '新约圣经');
-  await BibleDao.updateStatment(bible, false, '旧约圣经');
+  const updateTestatmentPromises = testaments.map(
+    ({ isNew, testamentName }) =>
+    BibleDao.updateTestatment(bible, isNew, testamentName));
 
-  await BibleDao.addScriptures(bible, false, '创世纪', 1, 1, '起初神创造天地');
+  await updateTestatmentPromises;
+
+  //await BibleDao.addScriptures(bible, false, '创世纪', 1, 1, '起初神创造天地');
   BibleDao.close();
-
-    */
 }());
-// request
-//    .get(indexUrl)
-//    .end(function(err, res){
-//      console.log(res.text);
-//    });
