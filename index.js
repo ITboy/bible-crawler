@@ -23,8 +23,7 @@ const getTestamentName = function getTestamentName(originName) {
 };
 
 (async function main() {
-  const res = await request.get(indexUrl);
-  console.log(res.text());
+  const { res } = await request.get(indexUrl);
   const $ = cheerio.load(res.text);
 
   const testaments = $('div.tm.cn').map((i, element) => {
