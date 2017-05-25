@@ -56,9 +56,9 @@ describe('CachedSuperAgent', function () {
       new Array(jobCount).fill(0).forEach(function () {
         //console.log(request.requestQueue.size);
         request.get('http://www.o-bible.com/gb/hgb.html')
-        .then(({ res, retriedTimes }) => {
+        .then((res) => {
           resolveCount++;
-          console.log(`finish ${resolveCount}, retried ${retriedTimes + 1} times`);
+          console.log(`finish ${resolveCount}`);
           if (resolveCount + rejectCount === jobCount) {
             done();
           }

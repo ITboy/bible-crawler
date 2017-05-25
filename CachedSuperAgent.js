@@ -11,48 +11,55 @@ class CachedSuperAgent {
     this.requestQueue = new Set();
     this.waitQueue = [];
   }
-  get(url, retriedTimes = 0) {
-    console.log('retried ' + retriedTimes + ' -- begin');
-    if (this.requestQueue.size < this.requestQueueSize) {
+
+  /**
+   * check if the requestQueue is full
+   * @param url the url for request
+   * @return false if requestQueue is full
+   */
+  canRequest() {
+    return this.requestQueue.size < this.requestQueueSize;
+  }
+
+  /**
+   * shift the promise in turn in waitQueue, and resume them
+   */
+  resume() {
+    // 处理等待队列的请求
+    while (this.canRequest()
+          && this.waitQueue.length > 0) {
+      const { url, resolve, reject } = this.waitQueue.shift();
+      this.get(url).then(resolve).catch(reject);
+    }
+  }
+
+  /**
+   * finish a get request
+   * @return return a promise
+   */
+  get(url) {
+    if (this.canRequest()) {
       const requestPromise = request.get(url)
         .charset(this.charset)
         .timeout({ response: this.timeout, deadline: this.deadline })
+        .retry(this.maxRetriedTimes)
         .then((res) => {
           console.log('in then');
           this.requestQueue.delete(requestPromise);
-          // 处理等待队列的请求
-          while (this.requestQueue.size < this.requestQueueSize
-                && this.waitQueue.length > 0) {
-            //console.log('queueSize: ' + this.requestQueue.size + ' waitQueueSize: ' + this.waitQueue.length);
-            const { url, retriedTimes, resolve, reject } = this.waitQueue.shift();
-            this.get(url, retriedTimes).then(resolve).catch(reject);
-            //console.log('queueSize: ' + this.requestQueue.size + ' waitQueueSize: ' + this.waitQueue.length);
-          }
-          return { res, retriedTimes };
+          this.resume();
+          return res;
         })
         .catch((error) => {
-          console.log('in catch: ' + error);
-          this.requestQueue.delete(requestPromise);
-          console.log((error.message.includes('timeout') || error.message.includes('Timeout')) && retriedTimes < this.maxRetriedTimes);
-          // 超时请求可能存在死连接，放在后面处理
-          if ((error.message.includes('timeout') || error.message.includes('Timeout')) && retriedTimes < this.maxRetriedTimes) {
-            console.log('retried ' + retriedTimes);
-            return this.get(url, retriedTimes + 1);
-          }
+          console.log(error);
 
-          // 处理等待队列的请求
-          while (this.requestQueue.size < this.requestQueueSize
-                && this.waitQueue.length > 0) {
-            const { url, retriedTimes, resolve, reject } = this.waitQueue.shift();
-            this.get(url, retriedTimes).then(resolve, reject);
-          }
-          throw error;
-          console.log('return reject');
+          this.requestQueue.delete(requestPromise);
+          this.resume();
+          return Promise.reject(error);
         });
       this.requestQueue.add(requestPromise);
       return requestPromise;
     }
-    const waitPromise = { url, retriedTimes };
+    const waitPromise = { url };
     this.waitQueue.push(waitPromise);
     return new Promise((resolve, reject) => {
       Object.assign(waitPromise, { resolve, reject });
@@ -60,4 +67,5 @@ class CachedSuperAgent {
   }
 }
 
+// export the class
 module.exports = CachedSuperAgent;
