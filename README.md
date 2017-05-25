@@ -88,7 +88,7 @@ Schema:
     {
       name: '创世纪',
       chapters: 50,
-      testaement: [object],
+      testament: [object],
     }
     ```
   * `chapter`
@@ -150,4 +150,3 @@ Schema:
     chapter: [object],
   }
   ```
-  
