@@ -46,7 +46,7 @@ describe('CachedSuperAgent', function () {
       });
     });
 
-    it.only('should in turns if request queue is full', function (done) {
+    it('should in turns if request queue is full', function (done) {
       // In chinese network, google is timeout, what's more, timeout is set 500 ms.
       this.timeout(300000);
       const request = new CachedSuperAgent('gbk', 1000, 1000, 5, 10);

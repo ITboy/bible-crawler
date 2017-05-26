@@ -65,17 +65,17 @@ Schema:
 
 #### 事件
   * `bible`
-    ``` javascript
+    ``` js
     {
       name: '圣经和合本',
       version: '和合本',
       language: '简体中文',
-      index: 'http://www.o-bible.com/gb/hgb.html',
-      host: 'http://www.o-bible.com/',
+      indexUrl: 'http://www.o-bible.com/gb/hgb.html',
+      rootUrl: 'http://www.o-bible.com/',
     }
     ```
   * `testament`
-    ``` javascript
+    ``` js
     {
       name: '旧约全书',
       isNew: false,
@@ -84,69 +84,69 @@ Schema:
     }
     ```
   * `book`
-    ``` javascript
+    ``` js
     {
       name: '创世纪',
-      chapters: 50,
+      chapterCount: 50,
       testament: [object],
     }
     ```
   * `chapter`
-  ``` javascript
-  {
-    chapterNo: '1',
-    sectionCount: 31,
-    book: [object],
-  }
-  ```
+    ``` js
+    {
+      chapterNo: '1',
+      sectionCount: 31,
+      book: [object],
+    }
+    ```
   * `section`
-  ``` javascript
-  {
-    sectionNo: '1',
-    text: '起初，神创造天地',
-    chapter: [object],
-  }
-  ```
+    ``` js
+    {
+      sectionNo: '1',
+      text: '起初，神创造天地',
+      chapter: [object],
+    }
+    ```
   * `bible-end`
-  ``` javascript
-  {
-    name: '圣经和合本',
-    version: '和合本',
-    language: '简体中文',
-    index: 'http://www.o-bible.com/gb/hgb.html',
-    host: 'http://www.o-bible.com/',
-  }
-  ```
+    ``` js
+    {
+      name: '圣经和合本',
+      version: '和合本',
+      language: '简体中文',
+      indexUrl: 'http://www.o-bible.com/gb/hgb.html',
+      rootUrl: 'http://www.o-bible.com/',
+    }
+    ```
   * `testament-end`
-  ``` javascript
-  {
-    name: '旧约全书',
-    isNew: false,
-    booksCount: 39,
-    bible: [object],
-  }
-  ```
+    ``` js
+    {
+      name: '旧约全书',
+      isNew: false,
+      booksCount: 39,
+      bible: [object],
+    }
+    ```
   * `book-end`
-  ``` javascript
-  {
-    name: '创世纪',
-    chapters: 50,
-    testaement: [object],
-  }
-  ```
+    ``` js
+    {
+      name: '创世纪',
+      chapters: 50,
+      testaement: [object],
+    }
+    ```
   * `chapter-end`
-  ``` javascript
-  {
-    chapterNo: '1',
-    sectionCount: 31,
-    book: [object],
-  }
-  ```
+    ``` js
+    {
+      chapterNo: '1',
+      sectionCount: 31,
+      book: [object],
+    }
+    ```
   * `section-end`
-  ``` javascript
-  {
-    sectionNo: '1',
-    text: '起初，神创造天地',
-    chapter: [object],
-  }
-  ```
+    ``` js
+    {
+      sectionNo: '1',
+      text: '起初，神创造天地',
+      chapter: [object],
+    }
+    ```

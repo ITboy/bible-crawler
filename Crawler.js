@@ -12,16 +12,16 @@ class Crawler extends EventEmitter {
       const { name,
               language,
               version,
-              index,
-              host,
+              indexUrl,
+              rootUrl,
               newTestamentUrl,
               oldTestamentUrl,
             } = this.parseBible(res);
-      const bible = { name, language, version, index, host };
+      const bible = { name, language, version, indexUrl, rootUrl };
       this.emit('bible', bible);
       const testaments = [{ isNew: true, testamentUrl: newTestamentUrl, bible },
                           { isNew: false, testamentUrl: oldTestamentUrl, bible }];
-      async.each(testaments, this.crawlTestament.bind(this), function (error) {
+      async.each(testaments, this.crawlTestament.bind(this), (error) => {
         if (error) {
           this.emit('error', error);
         } else {
@@ -31,35 +31,55 @@ class Crawler extends EventEmitter {
     });
   }
 
-  crawlTestament({ testamentUrl, isNew, bible }, callback) {
+  crawlTestament(testament, callback) {
+    const { testamentUrl, isNew, bible } = testament;
     this.request.get(testamentUrl).then((res) => {
-      console.log('in crawlTestament then');
-      console.log(this.parseTestament(res, isNew));
-      const { testamentName, books } = this.parseTestament(res, isNew);
+      const { testamentName, books } = this.parseTestament(res, bible, isNew);
 
       const booksCount = books.length;
-      const testament = { name: testamentName, isNew, booksCount, bible };
-      this.emit('testament', testament);
-      console.log(('after emit testament'));
-      async.each(books, ({ url }, callback) => this.crawlBook(url, testament, callback), function (error) {
+      const testamentData = { name: testamentName, isNew, booksCount, bible };
+      this.emit('testament', testamentData);
+
+      async.each(books, this.crawlBook.bind(this), (error) => {
         if (error) {
           callback(error);
         } else {
-          this.emit('testament-end', testament);
+          this.emit('testament-end', testamentData);
           callback();
         }
       });
     });
   }
 
-  crawlBook(url, testament, callback) {
-    console.log('in crawlBook, ' + this);
-    this.emit('book', {});
-    callback();
+  crawlBook(book, callback) {
+    const { bookUrl, bookName } = book;
+    this.request.get(bookUrl).then((res) => {
+      const { chapterCount, chapters } = this.parseBook(res, book);
+      Object.assign(book, { chapterCount, chapters });
+      const bookData = { name: bookName, chapterCount };
+      this.emit('book', bookData);
+      async.each(chapters, this.crawlChapter.bind(this), (error) => {
+        if (error) {
+          callback(error);
+        } else {
+          this.emit('book-end', bookData);
+          callback();
+        }
+      });
+    }).catch((error) => {
+      callback(error);
+    });
   }
 
-  crawlChapter(url, book) {
-
+  crawlChapter(chapter, callback) {
+    const { chapterUrl } = chapter;
+    this.request.get(chapterUrl).then((res) => {
+      const sections = this.parseChapter(res, chapter);
+      sections.forEach((section) => {
+        this.emit('section', section);
+      });
+      this.emit('chapter-end', chapter);
+    });
   }
 }
 

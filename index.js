@@ -1,7 +1,6 @@
 const BibleDal = require('./BibleDal');
 const cheerio = require('cheerio');
-const CachedSuperAgent = require('./CachedSuperAgent');
-const URL = require('url');
+const CrawlerHehe = require('./CrawlerHehe');
 
 const BibleDao = new BibleDal('mongodb://localhost:27017/mydb');
 
@@ -11,44 +10,58 @@ const indexUrl = 'http://www.o-bible.com/gb/hgb.html';
 const NEW_TESTAMENT_NAME = '新约全书';
 const OLD_TESTAMENT_NAME = '旧约全书';
 
-const request = new CachedSuperAgent('gbk');
+const crawler = new CrawlerHehe();
 
-const innerTrim = function innerTrim(originText) {
-  const split = String.prototype.split;
-  return split.call(originText, /\s*/).join('');
-};
+crawler.on('bible', function (bible) {
+  const { name, language, version, rootUrl, indexUrl } = bible;
 
-const getTestamentName = function getTestamentName(originName) {
-  const testamentNameLen = OLD_TESTAMENT_NAME.length;
-  return Array.from(innerTrim(originName)).slice(0, testamentNameLen).join('');
-};
-
-const fetchChapters = async function fetchChapters(bookUrl) {
-  const { res } = await request.get(URL.resolve(mainUrl, bookUrl));
-  const $ = cheerio.load(res.text);
-  return $('div#topLink td.cl a').map((index, element) => {
-    return {
-      chapterNo: $(element).text(),
-      chapterUrl: $(element).attr('href'),
-    };
-  }).get();
-};
-
-const fetchSections = async function fetchSections(chapterUrl) {
-  const { res } = await request.get(URL.resolve(mainUrl, chapterUrl));
-  const $ = cheerio.load(res.text);
-  return $('#content td.v.gb').map((index, element) => {
-    console.log({
-      sectionNo: index + 1,
-      text: $(element).text(),
+  BibleDao.createBible(
+    name,
+    version,
+    language,
+    {
+      rootUrl,
+      indexUrl,
     });
-    return {
-      sectionNo: index + 1,
-      text: $(element).text(),
-    };
-  }).get();
-};
+});
 
+crawler.on('testament', function (testament) {
+  const { bible, isNew, name } = testament;
+  console.log('-----testament event------');
+  console.dir(testament, {depth: 4});
+  BibleDao.updateTestatment(bible, isNew, name);
+});
+
+crawler.on('book', function (book) {
+  console.log('------------book event -----------');
+
+  console.dir(book, {depth: 4});
+});
+
+crawler.on('chapter', function(chapter) {
+  console.log('---chapter event----');
+  console.log('chapter:' + chapter);
+});
+
+crawler.on('section', function(section) {
+  console.log('---section event----');
+  console.log(section);
+});
+
+crawler.on('book-end', function(book) {
+  console.log('book-end:' + book.name);
+});
+
+crawler.on('testament-end', function(testament) {
+  console.log('testament-end:' + testament.name);
+});
+
+crawler.on('bible-end', function(bible) {
+  console.log('bible-end:' + bible.name);
+});
+
+crawler.crawlBible(indexUrl);
+/*
 (async function main() {
   const { res } = await request.get(indexUrl);
   const $ = cheerio.load(res.text);
@@ -95,12 +108,13 @@ const fetchSections = async function fetchSections(chapterUrl) {
   });
   await Promise.all(testamentPromises);
   console.log('-------------------------- finish ---------------------');
-  /*
+
   const chapters = await fetchChapters(testaments[0].books[1].url);
   console.log(chapters);
   const sections = await fetchSections(chapters[0]);
   console.log(sections);
   //await BibleDao.addScriptures(bible, false, '创世纪', 1, 1, '起初神创造天地');
-  */
+  
   BibleDao.close();
-}());
+};
+*/
