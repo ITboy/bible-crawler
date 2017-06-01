@@ -1,8 +1,16 @@
+require('babel-polyfill');
+
 const request = require('superagent');
 require('superagent-charset')(request);
 
 class CachedSuperAgent {
-  constructor(charset = 'utf8', timeout = 5000, deadline = 10000, maxRetriedTimes = 5, maxRequestCount = 50) {
+  constructor(
+    charset = 'utf8',
+    timeout = 5000,
+    deadline = 10000,
+    maxRetriedTimes = 5,
+    maxRequestCount = 50,
+  ) {
     this.charset = charset;
     this.timeout = timeout;
     this.deadline = deadline;
@@ -59,10 +67,8 @@ class CachedSuperAgent {
       this.requestQueue.add(requestPromise);
       return requestPromise;
     }
-    const waitPromise = { url };
-    this.waitQueue.push(waitPromise);
     return new Promise((resolve, reject) => {
-      Object.assign(waitPromise, { resolve, reject });
+      this.waitQueue.push({ url, resolve, reject });
     });
   }
 }

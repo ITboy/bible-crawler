@@ -1,3 +1,5 @@
+require('babel-polyfill');
+
 const { MongoClient } = require('mongodb');
 
 class BibleDal {
@@ -33,7 +35,8 @@ class BibleDal {
       throw new Error('Bible should be exist first!');
     }
     const testatmentName = isNew ? { newTestament: { name } } : { oldTestament: { name } };
-    await this.db.collection('bible').update(bible, { $set: testatmentName });
+    await this.db.collection('bible')
+                 .update(bible, { $set: testatmentName });
   }
 
   async addScriptures(bible, isNew, bookName, chapterNo, sectionNo, text) {
@@ -43,7 +46,10 @@ class BibleDal {
       throw new Error('Bible should be exist first!');
     }
     const testamentField = isNew ? 'newTestament' : 'oldTestament';
-    this.db.collection('bible').update({ name: bible.name }, { $set: { [`${testamentField}.${bookName}.${chapterNo}.${sectionNo}`]: text } });
+    this.db.collection('bible').update(
+      { name: bible.name },
+      { $set: { [`${testamentField}.${bookName}.${chapterNo}.${sectionNo}`]: text } },
+    );
   }
 
   async close() {

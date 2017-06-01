@@ -4,6 +4,7 @@
   "description": "an crawler program for multiple versions of bible",
   "main": "index.js",
   "scripts": {
+    "build": "babel src -d lib",
     "start": "node index.js",
     "lint": "eslint .",
     "test": "mocha"
@@ -23,6 +24,8 @@
   },
   "homepage": "https://github.com/ITboy/bible-crawler#readme",
   "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
     "eslint": "^3.19.0",
     "eslint-config-airbnb": "^15.0.1",
     "eslint-config-airbnb-base": "^11.2.0",
@@ -33,6 +36,7 @@
   },
   "dependencies": {
     "async": "^2.4.1",
+    "babel-polyfill": "^6.23.0",
     "cheerio": "^0.22.0",
     "mongodb": "^2.2.27",
     "require": "^2.4.20",

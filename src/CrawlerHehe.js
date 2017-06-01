@@ -1,7 +1,9 @@
+require('babel-polyfill');
+
 const CachedSuperAgent = require('./CachedSuperAgent');
 const Crawler = require('./Crawler');
 const cheerio = require('cheerio');
-const URL = require('url');
+const resolveUrl = require('url').resolve;
 
 const request = new CachedSuperAgent('GBK');
 
@@ -32,7 +34,7 @@ class CrawlerHehe extends Crawler {
     super(request);
   }
 
-  parseBible() {
+  static parseBible() {
     const name = '圣经和合本';
     const language = '简体中文';
     const version = '和合本';
@@ -43,7 +45,7 @@ class CrawlerHehe extends Crawler {
     return { name, language, version, indexUrl, rootUrl, newTestamentUrl, oldTestamentUrl };
   }
 
-  /*
+  /**
    * 解析response，得到其中跟testament相关的数据
    * {
    *    testamentName: '新约全书',
@@ -52,53 +54,74 @@ class CrawlerHehe extends Crawler {
    *            { name: '马太福音', url: 'http://xxxxx },],
    * }
    */
-  parseTestament(res, bible, isNew) {
+  static parseTestament(res, testament) {
     const $ = cheerio.load(res.text);
-    const testament = { bible };
-    const { rootUrl } = bible;
-    $('div.tm.cn').each((i, element) => {
+    const { isNew, bible: { rootUrl } } = testament;
+    const { testamentUrl, ...testamentData } = testament;
+    let testamentName;
+
+    const $testament = $('div.tm.cn').filter((i, element) => {
       const $this = $(element);
-      const testamentName = getTestamentName($this.find('div.tt').text());
-      if (isNew === (testamentName === NEW_TESTAMENT_NAME)) {
-        const books = $this.find('a').map((j, anchorElem) => ({
-          bookName: innerTrim($(anchorElem).text()),
-          bookUrl: URL.resolve(rootUrl, $(anchorElem).attr('href')),
-          testament,
-        })).get();
-        Object.assign(testament, { testamentName, isNew, books });
-      }
+      testamentName = getTestamentName($this.find('div.tt').text());
+      return (isNew && (testamentName === NEW_TESTAMENT_NAME)) ||
+      (!isNew && (testamentName === OLD_TESTAMENT_NAME));
     });
-    return testament;
+
+    if (!$testament && testamentName) throw new Error('No testament name matched');
+
+    const books = $testament.find('a').map((i, anchorElem) => ({
+      bookName: innerTrim($(anchorElem).text()),
+      bookUrl: resolveUrl(rootUrl, $(anchorElem).attr('href')),
+      testament: testamentData,
+    })).get();
+    const booksCount = books.length;
+    return Object.assign(testamentData, { name: testamentName, books, booksCount });
   }
 
-  parseBook(res, book) {
+  static parseBook(res, book) {
     const rootUrl = book.testament.bible.rootUrl;
     const $ = cheerio.load(res.text);
     const chapters = [];
-    const $currentChapter = $('#topLink td.cl span');
-    chapters.push({ chapterNo: $currentChapter.text(), chapterUrl: book.bookUrl, book });
+    const { bookUrl, ...bookData } = book;
 
+    // add current chapter
+    const $currentChapter = $('#topLink td.cl span');
+    chapters.push({ chapterNo: $currentChapter.text(), chapterUrl: bookUrl, bookData });
+
+    // add other chapters
     $('#topLink td.cl a').each((index, element) => {
       chapters.push({
         chapterNo: $(element).text(),
         chapterUrl: URL.resolve(rootUrl, $(element).attr('href')),
-        book,
+        book: bookData,
       });
     });
     const chapterNos = [].keys.call(chapters);
     const chapterCount = Math.max(...chapterNos);
-    return { chapterCount, chapters };
+    return Object.assign(bookData, { chapterCount, chapters });
   }
 
-  parseChapter(res, chapter) {
+  static parseChapter(res, chapter) {
+    const { chapterUrl, ...chapterData } = chapter;
     const $ = cheerio.load(res.text);
     const $sections = $('div#content tr').map((index, element) => {
       const chapterSection = $(element).find('td.vn').first().text();
       const sectionNo = chapterSection.split(':')[1];
       const sectionText = $(element).find('td.v.gb').text();
-      return { sectionNo, sectionText };
+      return { sectionNo, sectionText, chapter: chapterData };
     });
-    return $sections.get();
+    const sections = $sections.get();
+    const sectionCount = sections.length;
+    return Object.assign(chapterData, { sections, sectionCount });
+  }
+
+  run() {
+    return this.crawlBible(indexUrl);
   }
 }
-module.exports = CrawlerHehe;
+
+const crawler = function crawler() {
+  return new CrawlerHehe(request);
+};
+
+module.exports = crawler;
