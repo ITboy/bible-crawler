@@ -4,7 +4,7 @@
   "description": "an crawler program for multiple versions of bible",
   "main": "index.js",
   "scripts": {
-    "build": "babel src -d lib",
+    "build": "babel src/ -d lib/",
     "start": "node index.js",
     "lint": "eslint .",
     "test": "mocha"
