@@ -1,13 +1,22 @@
 require('babel-polyfill');
 
-const BibleDal = require('./BibleDal');
 const crawlerHehe = require('./CrawlerHehe')();
+const BibleDal = require('./BibleDal')('mongodb://localhost:27017/mydb');
 
-const BibleDao = new BibleDal('mongodb://localhost:27017/mydb');
-
+let heheBible;
 crawlerHehe.on('bible', (bible) => {
   console.log('---------- bible event --------');
   console.log(bible);
+  const { name, version, language, indexUrl, rootUrl } = bible;
+  BibleDal.createBible(
+    name,
+    version,
+    language,
+    indexUrl,
+    { indexUrl, rootUrl },
+  ).then((bibleModel) => {
+    heheBible = bibleModel;
+  });
   /*
   const { name, language, version, rootUrl, indexUrl } = bible;
 
@@ -25,6 +34,7 @@ crawlerHehe.on('bible', (bible) => {
 crawlerHehe.on('testament', (testament) => {
   //const { bible, isNew, name } = testament;
   console.log('----- testament event ------');
+  updateTestatment(heheBible, testament.isNew, testament.name);
   console.dir(testament, { depth: 4 });
   //BibleDao.updateTestatment(bible, isNew, name);
 });
@@ -43,6 +53,17 @@ crawlerHehe.on('chapter', (chapter) => {
 crawlerHehe.on('section', (section) => {
   console.log('--- section event ----');
   console.log(section);
+  const chapter = section.chapter;
+  const book = chapter.book;
+  const testament = book.testament;
+  BibleDal.addScriptures(
+    heheBible,
+    testament.isNew,
+    book.name,
+    chapter.chapterNo,
+    section.sectionNo,
+    section.text
+  )
 });
 
 crawlerHehe.on('book-end', (book) => {
