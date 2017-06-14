@@ -39,6 +39,7 @@ class Crawler extends EventEmitter {
       return new Promise((resolve, reject) =>
         async.each(testaments, (item, cb) => this.crawlTestament(item, cb), (error) => {
           if (error) {
+            this.emit('error', { ...error, level: level.TESTAMENT });
             reject(error);
           } else {
             resolve(bibleData);
@@ -49,7 +50,7 @@ class Crawler extends EventEmitter {
       this.emit('bible-end', bibleData);
     })
     .catch((error) => {
-      this.emit('bible-end', bible, error);
+      this.emit('error', { ...error, level: level.BIBLE });
     });
   }
 
@@ -72,10 +73,10 @@ class Crawler extends EventEmitter {
 
       this.emit('testament', testamentData);
 
-      return new Promise((resolve, reject) =>
+      return new Promise(resolve =>
         async.each(testamentData.books, (item, cb) => this.crawlBook(item, cb), (error) => {
           if (error) {
-            reject(error);
+            this.emit('error', { ...error, level: level.BOOK }, callback);
           } else {
             resolve(testamentData);
           }
@@ -86,8 +87,8 @@ class Crawler extends EventEmitter {
       callback();
     })
     .catch((error) => {
-      this.emit('testament-end', testament, error);
-      callback(error);
+      this.emit('testament-end', testament);
+      this.emit('error', { ...error, level: level.TESTAMENT }, callback);
     });
   }
 
@@ -121,8 +122,8 @@ class Crawler extends EventEmitter {
       callback();
     })
     .catch((error) => {
-      this.emit('book-end', book, error);
-      callback(error);
+      this.emit('book-end', book);
+      this.emit('error', { ...error, level: level.BOOK }, callback);
     });
   }
 
@@ -156,8 +157,8 @@ class Crawler extends EventEmitter {
       callback();
     })
     .catch((error) => {
-      this.emit('chapter-end', error);
-      callback(error);
+      this.emit('chapter-end', chapter);
+      this.emit('error', { ...error, level: level.CHAPTER, chapter }, callback);
     });
   }
 

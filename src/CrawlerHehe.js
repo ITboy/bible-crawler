@@ -1,7 +1,7 @@
 require('babel-polyfill');
 
 const CachedSuperAgent = require('./CachedSuperAgent');
-const Crawler = require('./Crawler');
+const { Crawler } = require('./Crawler');
 const cheerio = require('cheerio');
 const resolveUrl = require('url').resolve;
 

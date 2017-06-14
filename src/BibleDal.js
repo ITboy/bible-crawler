@@ -59,4 +59,6 @@ class BibleDal {
   }
 }
 
-module.exports = BibleDal;
+module.exports = function bibleDal(mongoUrl) {
+  return new BibleDal(mongoUrl);
+};
